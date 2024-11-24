@@ -3,7 +3,10 @@ This module contains a function to load a distance matrix from a file
 and convert it into a dictionary format for use in problems like the
 Traveling Salesman Problem.
 """
+
 import os
+from typing import Dict, List, Optional, Tuple
+
 
 class DistanceMatrixError(Exception):
     """
@@ -11,7 +14,10 @@ class DistanceMatrixError(Exception):
     such as invalid data or matrix inconsistencies.
     """
 
-def parse_matrix(lines, num_cities, city_names):
+
+def parse_matrix(
+    lines: List[str], num_cities: int, city_names: List[str]
+) -> Dict[Tuple[str, str], int]:
     """
     Parses the distance matrix from the lines of the file.
 
@@ -28,7 +34,7 @@ def parse_matrix(lines, num_cities, city_names):
     """
     city_distances = {}
 
-    for i, line in enumerate(lines[1: num_cities + 1]):
+    for i, line in enumerate(lines[1 : num_cities + 1]):
         values = list(map(int, line.split()))
         if len(values) != num_cities:
             raise ValueError(f"Row {i + 1} does not have {num_cities} columns.")
@@ -38,25 +44,27 @@ def parse_matrix(lines, num_cities, city_names):
 
     return city_distances
 
-def load_distances(file_name, folder="input") -> tuple:
+
+def load_distances(
+    file_name: str, folder: str = "input", city_names: Optional[List[str]] = None
+) -> Tuple[Dict[Tuple[str, str], int], List[str]]:
     """
-    Loads a distance matrix from a file in the `input` folder and converts it into a dictionary.
+    Loads a distance matrix from a file and converts it into a dictionary.
 
     Args:
         file_name (str): The name of the file containing the data.
         folder (str): The path to the folder containing the file.
+        city_names (list, optional): A list of city names. If not provided,
+                                     default names like 'city_1', 'city_2', etc., are used.
 
     Returns:
-        dict: A dictionary of distances in the format {(city1, city2): distance, ...}.
-        list: A list of cities in the order they appear in the matrix.
+        tuple: A dictionary of distances and a list of city names.
 
     Raises:
         FileNotFoundError: If the distance matrix file is not found.
-        ValueError: If there is an issue with parsing the file or
-        if the matrix dimensions are incorrect.
+        ValueError: If the matrix dimensions or data are invalid.
         OSError: If there is a file access error.
-        DistanceMatrixError: If the matrix has invalid data
-        (e.g., non-symmetric, negative distances).
+        DistanceMatrixError: For general matrix-related issues.
     """
     file_path = os.path.join(folder, file_name)
 
@@ -65,7 +73,17 @@ def load_distances(file_name, folder="input") -> tuple:
             lines = f.readlines()
 
         num_cities = int(lines[0].strip())
-        city_names = [f"city_{i+1}" for i in range(num_cities)]
+        if num_cities <= 0:
+            raise ValueError(
+                f"Number of cities must be a positive integer, got {num_cities}."
+            )
+
+        if city_names is None:
+            city_names = [f"city_{i+1}" for i in range(num_cities)]
+        elif len(city_names) != num_cities:
+            raise ValueError(
+                "Provided city names do not match the number of cities in the file."
+            )
 
         if len(lines) < num_cities + 1:
             raise ValueError(
