@@ -23,7 +23,8 @@ class GeneticConfig:
     """Configuration parameters for the genetic algorithm.
 
     Attributes:
-        generations: Number of generations to evolve
+        generations: Number of generations to evolve, i.e., iterations,
+        this is stop condition for the algorithm
         population_size: Size of the population in each generation
         crossover_rate: Probability of performing crossover (0-1)
         mutation_rate: Probability of mutation occurring (0-1)
@@ -99,28 +100,22 @@ class TSPSolver:
             population.append(tuple(cities_array))
         return population
 
-    def _pmx_crossover(self, parent1: tuple, parent2: tuple) -> tuple:
-        """Partially Mapped Crossover (PMX) - more effective for TSP."""
+    def _single_point_crossover(self, parent1: tuple, parent2: tuple) -> tuple:
+        """Single-point crossover operator."""
         size = len(parent1)
-        start, end = sorted(np.random.randint(0, size, 2))
+        point = np.random.randint(
+            1, size
+        )  # Random crossover point (excluding first and last)
 
-        # Create mapping and child
-        child = [None] * size
-        for i in range(start, end):
-            child[i] = parent1[i]
+        # Create children by combining parts of parents
+        child1 = list(parent1[:point]) + [
+            gene for gene in parent2 if gene not in parent1[:point]
+        ]
+        child2 = list(parent2[:point]) + [
+            gene for gene in parent1 if gene not in parent2[:point]
+        ]
 
-        # Create mapping between segments
-        mapping = dict(zip(parent1[start:end], parent2[start:end]))
-
-        # Fill remaining positions
-        for i in range(size):
-            if i < start or i >= end:
-                current = parent2[i]
-                while current in child[start:end]:
-                    current = mapping.get(current, current)
-                child[i] = current
-
-        return tuple(child)
+        return tuple(child1), tuple(child2)
 
     def _edge_mutation(self, route: list, mutation_rate: float) -> None:
         """Edge mutation - better for preserving good sub-paths."""
@@ -165,10 +160,10 @@ class TSPSolver:
 
                 # Crossover and mutation
                 if np.random.random() < config.crossover_rate:
-                    children = [
-                        list(self._pmx_crossover(parents[0], parents[1])),
-                        list(self._pmx_crossover(parents[1], parents[0])),
-                    ]
+                    child1, child2 = self._single_point_crossover(
+                        parents[0], parents[1]
+                    )
+                    children = [list(child1), list(child2)]
                 else:
                     children = [list(p) for p in parents]
 
