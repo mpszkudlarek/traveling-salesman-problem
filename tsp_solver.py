@@ -5,12 +5,13 @@ that visits each city exactly once and returns to the starting city
 using genetic algorithm optimization.
 """
 
-from dataclasses import dataclass
 from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
+from base_tsp_solver import BaseTSPSolver
+from genetic_config import GeneticConfig
 from load_distances import load_distances
 
 # Define defaults for configuration
@@ -24,28 +25,7 @@ class DistanceMatrixError(Exception):
     """Custom exception for errors related to the distance matrix."""
 
 
-@dataclass(frozen=True)
-class GeneticConfig:
-    """
-    Configuration parameters for the genetic algorithm.
-
-    Attributes:
-        generations (int): Number of generations to evolve, i.e., iterations,
-            which serves as the stop condition for the algorithm.
-        population_size (int): Size of the population in each generation.
-        crossover_rate (float): Probability of performing crossover (value between 0 and 1).
-        mutation_rate (float): Probability of mutation occurring (value between 0 and 1).
-        tournament_size (int): Number of individuals in tournament selection.
-    """
-
-    generations: int
-    population_size: int
-    crossover_rate: float
-    mutation_rate: float
-    tournament_size: int
-
-
-class TSPSolver:
+class TSPSolver(BaseTSPSolver):
     """
     Traveling Salesman Problem solver using a genetic algorithm.
 
@@ -129,9 +109,16 @@ class TSPSolver:
         Returns:
             float: The total distance of the route.
         """
-        indices = [self.city_indices[city] for city in route]
-        distances = self.distance_matrix[indices[:-1], indices[1:]]
-        return float(np.sum(distances) + self.distance_matrix[indices[-1], indices[0]])
+        indices = [
+            self.city_indices[city] for city in route
+        ]  # Convert city names to indices
+        distances = self.distance_matrix[
+            indices[:-1], indices[1:]
+        ]  # Pairwise distances between cities, so for indices [0, 1, 2, 3],
+        # this would be [0-1, 1-2, 2-3]
+        return float(
+            np.sum(distances) + self.distance_matrix[indices[-1], indices[0]]
+        )  # Add the distance from the last city back to the first
 
     def init_population(self, pop_size: int) -> List[Tuple[str, ...]]:
         """
@@ -144,7 +131,7 @@ class TSPSolver:
             List[Tuple[str, ...]]: A list of routes, each represented as a tuple of city names.
         """
         cities_array = np.array(self.cities)
-        # Generate random permutations using np.random.permutation
+        # Generate random permutations using permutation function from numpy
         return [tuple(np.random.permutation(cities_array)) for _ in range(pop_size)]
 
     def _single_point_crossover(
@@ -161,14 +148,30 @@ class TSPSolver:
             Tuple[Tuple[str, ...], Tuple[str, ...]]: Two child routes resulting from crossover.
         """
         size = len(parent1)
-        point = np.random.randint(1, size)  # Random crossover point
+        point = np.random.randint(
+            1, size
+        )  # Random crossover point, 1 because we don't want to start at the first city
 
         # Create children by combining parts of parents
-        child1 = list(parent1[:point]) + [
-            gene for gene in parent2 if gene not in parent1[:point]
+        child1 = list(
+            parent1[:point]
+        ) + [  # Take the first part of parent1 up to the crossover point
+            gene
+            for gene in parent2
+            if gene
+            not in parent1[
+                :point
+            ]  # Add genes from parent2 that are not already in child1
         ]
-        child2 = list(parent2[:point]) + [
-            gene for gene in parent1 if gene not in parent2[:point]
+        child2 = list(
+            parent2[:point]
+        ) + [  # Take the first part of parent2 up to the crossover point
+            gene
+            for gene in parent1
+            if gene
+            not in parent2[
+                :point
+            ]  # Add genes from parent1 that are not already in child2
         ]
 
         return tuple(child1), tuple(child2)
@@ -181,8 +184,10 @@ class TSPSolver:
             route (List[str]): The route to mutate (list of city names).
             mutation_rate (float): Probability of mutation occurring.
         """
-        if np.random.random() < mutation_rate:
-            size = len(route)
+        if (
+            np.random.random() < mutation_rate
+        ):  # generate a random number between 0 and 1 and check if it's less than the mutation rate
+            size = len(route)  # get the number of cities
             # Select a random sub-path by picking two distinct indices
             start, end = sorted(np.random.choice(range(size), 2, replace=False))
             # Reverse the selected sub-path
@@ -198,8 +203,10 @@ class TSPSolver:
         Returns:
             float: The fitness score (1 / distance), where lower distance yields higher fitness.
         """
-        distance = self.route_distance(route)
-        return 1 / distance if distance != 0 else float("inf")  # Avoid division by zero
+        distance = self.route_distance(route)  # calculate the distance of the route
+        return (
+            1 / distance if distance != 0 else float("inf")
+        )  # Return the inverse of the distance as fitness score (avoid division by zero)
 
     def evaluate_population(
         self, population: List[Tuple[str, ...]]
