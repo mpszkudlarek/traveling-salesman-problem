@@ -5,14 +5,20 @@ that visits each city exactly once
 and returns to the starting city using genetic algorithm optimization.
 """
 
-import random
 from dataclasses import dataclass
-from typing import List, Optional, Tuple, cast
+from functools import lru_cache
+from typing import List, Tuple
+
+import numpy as np
 
 from load_distances import load_distances
 
 
-@dataclass
+class DistanceMatrixError(Exception):
+    """Custom exception for distance matrix-specific errors."""
+
+
+@dataclass(frozen=True)
 class GeneticConfig:
     """Configuration parameters for the genetic algorithm.
 
@@ -22,7 +28,6 @@ class GeneticConfig:
         crossover_rate: Probability of performing crossover (0-1)
         mutation_rate: Probability of mutation occurring (0-1)
         tournament_size: Number of individuals in tournament selection
-        elitism: Whether to preserve the best individual in each generation
     """
 
     generations: int
@@ -30,7 +35,6 @@ class GeneticConfig:
     crossover_rate: float
     mutation_rate: float
     tournament_size: int = 3
-    elitism: bool = True
 
 
 class TSPSolver:
@@ -40,158 +44,148 @@ class TSPSolver:
     that visits each city exactly once and returns to the starting city.
     """
 
-    def __init__(self, distance_file: str):
-        """Initialize the TSP solver with distances from file.
+    def __init__(self, distance_file: str, folder: str = "input"):
+        """
+        Initialize solver with distance matrix from file.
 
         Args:
-            distance_file: Path to the file containing distance matrix
+            distance_file: Name of the file containing distance matrix
+            folder: Folder containing the distance file
         """
-        self.distances, self.cities = load_distances(distance_file)
+        self.distance_matrix, self.cities = self._load_distances(distance_file, folder)
+        self.city_indices = {city: idx for idx, city in enumerate(self.cities)}
         self.best_route: List[str] = []
         self.best_distance: float = float("inf")
         self.city_count: int = len(self.cities)
 
-    def route_distance(self, route: List[str]) -> float:
-        """Calculate the total distance of a route.
-
-        Args:
-            route: List of cities in visit order
-
-        Returns:
-            Total distance of the route including return to start
+    def _load_distances(
+        self, file_name: str, folder: str = "input"
+    ) -> Tuple[np.ndarray, List[str]]:
         """
-        return (
-            sum(self.distances[(route[i], route[i + 1])] for i in range(len(route) - 1))
-            + self.distances[(route[-1], route[0])]
-        )
-
-    def init_population(self, pop_size: int) -> List[List[str]]:
-        """Initialize random population of routes.
-
-        Args:
-            pop_size: Size of population to generate
-
-        Returns:
-            List of random valid routes
-        """
-        return [random.sample(self.cities, len(self.cities)) for _ in range(pop_size)]
-
-    def fitness(self, route: List[str]) -> float:
-        """Calculate fitness value for a route.
-
-        Args:
-            route: List of cities in visit order
-
-        Returns:
-            Fitness value (inverse of route distance)
-        """
-        return 1 / self.route_distance(route)
-
-    def tournament_selection(
-        self, population: List[List[str]], fitnesses: List[float], tournament_size: int
-    ) -> List[str]:
-        """Select best individual from random tournament.
-
-        Args:
-            population: Current population of routes
-            fitnesses: Fitness values for each route
-            tournament_size: Number of individuals in tournament
-
-        Returns:
-            Selected route
-        """
-        tournament_indices = random.sample(range(len(population)), tournament_size)
-        return max(
-            (population[idx] for idx in tournament_indices),
-            key=lambda route: fitnesses[population.index(route)],
-        )
-
-    def crossover(self, parent1: List[str], parent2: List[str]) -> List[str]:
-        """Perform ordered crossover between two parent routes.
-
-        Args:
-            parent1: First parent route
-            parent2: Second parent route
-
-        Returns:
-            New route combining features from both parents
-        """
-        size = len(parent1)
-        start, end = sorted(random.sample(range(size), 2))
-
-        child: List[Optional[str]] = [None] * size
-
-        for i in range(start, end):
-            child[i] = parent1[i]
-
-        remaining_cities = [city for city in parent2 if city not in child]
-        j = 0
-        for i in range(size):
-            if child[i] is None:
-                child[i] = remaining_cities[j]
-                j += 1
-
-        return cast(List[str], child)
-
-    def mutate(self, route: List[str], mutation_rate: float) -> None:
-        """Perform swap mutation on a route with given probability.
-
-        Args:
-            route: Route to potentially mutate
-            mutation_rate: Probability of mutation occurring
-        """
-        if random.random() < mutation_rate:
-            idx1, idx2 = random.sample(range(len(route)), 2)
-            route[idx1], route[idx2] = route[idx2], route[idx1]
-
-    def solve(self, algorithm_config: GeneticConfig) -> Tuple[List[float], List[str]]:
-        """Execute genetic algorithm to find optimal route.
-
-        Args:
-            algorithm_config: Configuration parameters for the genetic algorithm
+        Load and validate distance matrix from file using the `load_distances` function.
 
         Returns:
             Tuple containing:
-                - List of best distances in each generation
-                - Best route found
+                - NumPy array of distances
+                - List of city names
         """
-        population = self.init_population(algorithm_config.population_size)
-        best_distances: List[float] = []
+        city_distances, cities = load_distances(file_name, folder)
 
-        for _ in range(algorithm_config.generations):
-            fitness = [self.fitness(route) for route in population]
+        # Convert dictionary of distances to NumPy array
+        num_cities = len(cities)
+        matrix = np.zeros((num_cities, num_cities))
 
-            current_best = min(population, key=self.route_distance)
+        for (city1, city2), distance in city_distances.items():
+            idx1 = cities.index(city1)
+            idx2 = cities.index(city2)
+            matrix[idx1, idx2] = distance
+            matrix[idx2, idx1] = distance  # Ensure symmetry
+
+        return matrix, cities
+
+    @lru_cache(maxsize=1024)
+    def route_distance(self, route: tuple) -> float:
+        """Calculate route distance using numpy operations and caching."""
+        indices = [self.city_indices[city] for city in route]
+        distances = self.distance_matrix[indices[:-1], indices[1:]]
+        return float(np.sum(distances) + self.distance_matrix[indices[-1], indices[0]])
+
+    def init_population(self, pop_size: int) -> List[tuple]:
+        """Initialize population using numpy's permutation."""
+        population = []
+        cities_array = np.array(self.cities)
+        for _ in range(pop_size):
+            np.random.shuffle(cities_array)
+            population.append(tuple(cities_array))
+        return population
+
+    def _pmx_crossover(self, parent1: tuple, parent2: tuple) -> tuple:
+        """Partially Mapped Crossover (PMX) - more effective for TSP."""
+        size = len(parent1)
+        start, end = sorted(np.random.randint(0, size, 2))
+
+        # Create mapping and child
+        child = [None] * size
+        for i in range(start, end):
+            child[i] = parent1[i]
+
+        # Create mapping between segments
+        mapping = dict(zip(parent1[start:end], parent2[start:end]))
+
+        # Fill remaining positions
+        for i in range(size):
+            if i < start or i >= end:
+                current = parent2[i]
+                while current in child[start:end]:
+                    current = mapping.get(current, current)
+                child[i] = current
+
+        return tuple(child)
+
+    def _edge_mutation(self, route: list, mutation_rate: float) -> None:
+        """Edge mutation - better for preserving good sub-paths."""
+        if np.random.random() < mutation_rate:
+            size = len(route)
+            start, end = sorted(np.random.randint(0, size, 2))
+            route[start:end] = reversed(route[start:end])
+
+    def solve(self, config: GeneticConfig) -> Tuple[List[float], List[str]]:
+        """Execute optimized genetic algorithm to find best route."""
+        population = self.init_population(config.population_size)
+        best_distances = []
+
+        for _ in range(config.generations):
+            # Calculate fitness scores
+            fitness_scores = np.array(
+                [1 / self.route_distance(route) for route in population]
+            )
+
+            # Find current best
+            best_idx = np.argmax(fitness_scores)
+            current_best = population[best_idx]
             current_distance = self.route_distance(current_best)
             best_distances.append(current_distance)
 
             if current_distance < self.best_distance:
                 self.best_distance = current_distance
-                self.best_route = current_best.copy()
+                self.best_route = list(current_best)
 
-            new_population: List[List[str]] = (
-                [current_best.copy()] if algorithm_config.elitism else []
-            )
+            # Create new population
+            new_population: List[tuple] = []
 
-            while len(new_population) < algorithm_config.population_size:
-                parent1 = self.tournament_selection(
-                    population, fitness, algorithm_config.tournament_size
-                )
-                parent2 = self.tournament_selection(
-                    population, fitness, algorithm_config.tournament_size
-                )
+            # Generate remaining population
+            while len(new_population) < config.population_size:
+                # Tournament selection
+                parents = [
+                    self._tournament_select(
+                        population, fitness_scores, config.tournament_size
+                    )
+                    for _ in range(2)
+                ]
 
-                if random.random() < algorithm_config.crossover_rate:
-                    child1 = self.crossover(parent1, parent2)
-                    child2 = self.crossover(parent1=parent2, parent2=parent1)
+                # Crossover and mutation
+                if np.random.random() < config.crossover_rate:
+                    children = [
+                        list(self._pmx_crossover(parents[0], parents[1])),
+                        list(self._pmx_crossover(parents[1], parents[0])),
+                    ]
                 else:
-                    child1, child2 = parent1[:], parent2[:]
+                    children = [list(p) for p in parents]
 
-                self.mutate(child1, algorithm_config.mutation_rate)
-                self.mutate(child2, algorithm_config.mutation_rate)
+                for child in children:
+                    self._edge_mutation(child, config.mutation_rate)
+                    new_population.append(tuple(child))
 
-                new_population.extend([child1, child2])
-
-            population = new_population[: algorithm_config.population_size]
+            population = new_population[: config.population_size]
 
         return best_distances, self.best_route
+
+    def _tournament_select(
+        self, population: List[tuple], fitness_scores: np.ndarray, tournament_size: int
+    ) -> tuple:
+        """Tournament selection using numpy operations."""
+        tournament_idx = np.random.choice(
+            len(population), tournament_size, replace=False
+        )
+        winner_idx = tournament_idx[np.argmax(fitness_scores[tournament_idx])]
+        return population[winner_idx]
