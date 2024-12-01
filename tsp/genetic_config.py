@@ -23,6 +23,7 @@ class GeneticConfig:
         tournament_size (int): Number of individuals in tournament selection.
         selection_method (str): Method of selection to use in the genetic algorithm.
         crossover_method (str): Method of crossover to use in the genetic algorithm.
+        chromosome_operation (str): Method of chromosome operation to use in the genetic algorithm.
     """
 
     generations: int
@@ -31,4 +32,5 @@ class GeneticConfig:
     mutation_rate: float
     tournament_size: int
     selection_method: str
-    # crossover_method: str
+    crossover_method: str
+    chromosome_operation: str

@@ -15,11 +15,13 @@ The factory supports:
 from typing import Callable, List, Tuple
 
 import numpy as np
-
-from crossover_method import (cycle_crossover, partially_mapped_crossover,
-                              single_point_crossover)
 from selection_method import (elitism_selection, ranking_selection,
                               tournament_selection)
+
+from tsp.chromosome_operation_method import (adjacent_swap_mutation,
+                                             inversion_mutation)
+from tsp.crossover_method import (cycle_crossover, partially_mapped_crossover,
+                                  single_point_crossover)
 
 
 class GeneticAlgorithmFactory:
@@ -94,3 +96,30 @@ class GeneticAlgorithmFactory:
             return partially_mapped_crossover
 
         raise ValueError(f"Unknown selection method: {method}")
+
+    @classmethod
+    def get_chromosome_operation_method(
+        cls, method: str
+    ) -> Callable[[Tuple[str, ...], float], Tuple[str, ...]]:
+        """
+        Retrieve a chromosome operation method based on the given method name.
+
+        Args:
+            method (str): The name of the chromosome operation method to retrieve.
+                Supported methods:
+                - 'ad_swap': adjacent swap mutation
+                - 'inversion': Inversion mutation
+
+        Returns:
+            Callable: A chromosome operation function that takes a route and mutation
+                      rate and returns a mutated route.
+
+        Raises:
+            ValueError: If an unknown chromosome operation method is specified.
+        """
+        if method == "ad_swap":
+            return adjacent_swap_mutation
+        if method == "inversion":
+            return inversion_mutation
+
+        raise ValueError(f"Unknown chromosome operation method: {method}")

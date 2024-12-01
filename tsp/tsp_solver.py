@@ -9,11 +9,11 @@ from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
-
-from base_tsp_solver import BaseTSPSolver
-from genetic_config import GeneticConfig
 from load_distances import load_distances
-from selection_factory import GeneticAlgorithmFactory
+
+from tsp.base_tsp_solver import BaseTSPSolver
+from tsp.genetic_config import GeneticConfig
+from tsp.selection_factory import GeneticAlgorithmFactory
 
 # Define defaults for configuration
 DEFAULTS = {
