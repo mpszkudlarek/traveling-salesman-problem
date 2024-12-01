@@ -13,6 +13,7 @@ import numpy as np
 from base_tsp_solver import BaseTSPSolver
 from genetic_config import GeneticConfig
 from load_distances import load_distances
+from selection_factory import GeneticAlgorithmFactory
 
 # Define defaults for configuration
 DEFAULTS = {
@@ -256,13 +257,15 @@ class TSPSolver(BaseTSPSolver):
         Returns:
             List[Tuple[str, ...]]: The new population after selection, crossover, and mutation.
         """
+        selection_method = GeneticAlgorithmFactory.get_selection_method(
+            config.selection_method
+        )
+
         new_population: List[Tuple[str, ...]] = []
 
         while len(new_population) < config.population_size:
             parents = [
-                self._tournament_select(
-                    population, fitness_scores, config.tournament_size
-                )
+                selection_method(population, fitness_scores, config.tournament_size)
                 for _ in range(2)
             ]
 
@@ -317,27 +320,3 @@ class TSPSolver(BaseTSPSolver):
             )
 
         return best_distances, self.best_route
-
-    def _tournament_select(
-        self,
-        population: List[Tuple[str, ...]],
-        fitness_scores: np.ndarray,
-        tournament_size: int,
-    ) -> Tuple[str, ...]:
-        """
-        Select an individual using tournament selection.
-
-        Args:
-            population (List[Tuple[str, ...]]): The current population of routes.
-            fitness_scores (np.ndarray): Fitness scores for each individual.
-            tournament_size (int): Number of individuals competing in the tournament.
-
-        Returns:
-            Tuple[str, ...]: The selected route.
-        """
-        tournament_indices = np.random.choice(
-            len(population), tournament_size, replace=False
-        )
-        tournament_scores = fitness_scores[tournament_indices]
-        winner_idx = tournament_indices[np.argmax(tournament_scores)]
-        return population[winner_idx]

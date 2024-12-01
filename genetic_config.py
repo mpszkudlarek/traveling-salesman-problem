@@ -8,6 +8,7 @@ population size, crossover and mutation rates, and tournament size.
 
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class GeneticConfig:
     """
@@ -20,6 +21,8 @@ class GeneticConfig:
         crossover_rate (float): Probability of performing crossover (value between 0 and 1).
         mutation_rate (float): Probability of mutation occurring (value between 0 and 1).
         tournament_size (int): Number of individuals in tournament selection.
+        selection_method (str): Method of selection to use in the genetic algorithm.
+        crossover_method (str): Method of crossover to use in the genetic algorithm.
     """
 
     generations: int
@@ -27,3 +30,5 @@ class GeneticConfig:
     crossover_rate: float
     mutation_rate: float
     tournament_size: int
+    selection_method: str
+    # crossover_method: str
