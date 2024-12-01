@@ -12,13 +12,16 @@ Supported selection methods:
 - Ranking Selection: Selects individuals based on their rank, with configurable selection pressure
 """
 
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
 
 def tournament_selection(
-    population: List[Tuple[str, ...]], fitness_scores: np.ndarray, tournament_size: int
+    population: List[Tuple[str, ...]],
+    fitness_scores: np.ndarray,
+    tournament_size: int,
+    random_seed: Optional[int] = None,
 ) -> Tuple[str, ...]:
     """
     Select an individual using tournament selection.
@@ -27,10 +30,19 @@ def tournament_selection(
         population (List[Tuple[str, ...]]): The current population of routes.
         fitness_scores (np.ndarray): Fitness scores for each individual.
         tournament_size (int): Number of individuals competing in the tournament.
+        random_seed (int, optional): A seed for the random number
+                                        generator to ensure reproducibility.
+
 
     Returns:
         Tuple[str, ...]: The selected route.
     """
+    if random_seed is not None:
+        np.random.seed(random_seed)
+
+    if tournament_size < 1 or tournament_size > len(population):
+        raise ValueError(f"Tournament size must be between 1 and {len(population)}.")
+
     tournament_indices = np.random.choice(
         len(population), tournament_size, replace=False
     )
@@ -40,7 +52,10 @@ def tournament_selection(
 
 
 def elitism_selection(
-    population: List[Tuple[str, ...]], fitness_scores: np.ndarray, num_elites: int
+    population: List[Tuple[str, ...]],
+    fitness_scores: np.ndarray,
+    num_elites: int,
+    random_seed: Optional[int] = None,
 ) -> Tuple[str, ...]:
     """
     Select a single elite individual, with preference for the top individuals.
@@ -49,10 +64,19 @@ def elitism_selection(
         population (List[Tuple[str, ...]]): The current population of routes.
         fitness_scores (np.ndarray): Fitness scores for each individual.
         num_elites (int): Number of top individuals to consider for selection.
+        random_seed (int, optional): A seed for the random number
+                                        generator to ensure reproducibility..
+
 
     Returns:
         Tuple[str, ...]: The selected elite route.
     """
+    if random_seed is not None:
+        np.random.seed(random_seed)
+
+    if num_elites < 1 or num_elites > len(population):
+        raise ValueError(f"Number of elites must be between 1 and {len(population)}.")
+
     # Sort indices based on fitness scores in descending order
     elite_indices = np.argsort(fitness_scores)[::-1][:num_elites]
 
@@ -65,7 +89,8 @@ def elitism_selection(
 def ranking_selection(
     population: List[Tuple[str, ...]],
     fitness_scores: np.ndarray,
-    selection_pressure: float = 1.5,
+    selection_pressure: Optional[float] = None,
+    random_seed: Optional[int] = None,
 ) -> Tuple[str, ...]:
     """
     Select an individual using ranking selection.
@@ -75,13 +100,28 @@ def ranking_selection(
         fitness_scores (np.ndarray): Fitness scores for each individual.
         selection_pressure (float, optional): Controls selection bias.
             Higher values create stronger selection pressure.
-            Defaults to 1.5.
+            If None, a dynamic default can be set.
+        random_seed (int, optional): A seed for the random number
+                                        generator to ensure reproducibility..
 
     Returns:
         Tuple[str, ...]: The selected route.
     """
+    if random_seed is not None:
+        np.random.seed(random_seed)
+
+    if selection_pressure is None:
+        selection_pressure = 1.5
+
+    # Validate selection pressure
+    if not 1.0 <= selection_pressure <= 2.0:
+        raise ValueError("Selection pressure must be between 1.0 and 2.0.")
+
     # Get the number of individuals
     population_size = len(population)
+
+    if population_size < 2:
+        raise ValueError("Population size must be at least 2 for ranking selection.")
 
     # Create ranking probabilities
     # Uses linear ranking selection formula
