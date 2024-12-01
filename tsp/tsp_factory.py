@@ -15,16 +15,17 @@ The factory supports:
 from typing import Callable, List, Tuple
 
 import numpy as np
-from selection_method import (elitism_selection, ranking_selection,
-                              tournament_selection)
 
-from tsp.chromosome_operation_method import (adjacent_swap_mutation,
-                                             inversion_mutation)
-from tsp.crossover_method import (cycle_crossover, partially_mapped_crossover,
-                                  single_point_crossover)
+from selection_method import elitism_selection, ranking_selection, tournament_selection
+from tsp.chromosome_operation_method import adjacent_swap_mutation, inversion_mutation
+from tsp.crossover_method import (
+    cycle_crossover,
+    partially_mapped_crossover,
+    single_point_crossover,
+)
 
 
-class GeneticAlgorithmFactory:
+class TspFactory:
     """
     A factory class for creating selection methods used in genetic algorithms.
 

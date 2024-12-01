@@ -13,7 +13,7 @@ from load_distances import load_distances
 
 from tsp.base_tsp_solver import BaseTSPSolver
 from tsp.genetic_config import GeneticConfig
-from tsp.selection_factory import GeneticAlgorithmFactory
+from tsp.tsp_factory import TspFactory
 
 # Define defaults for configuration
 DEFAULTS = {
@@ -257,9 +257,7 @@ class TSPSolver(BaseTSPSolver):
         Returns:
             List[Tuple[str, ...]]: The new population after selection, crossover, and mutation.
         """
-        selection_method = GeneticAlgorithmFactory.get_selection_method(
-            config.selection_method
-        )
+        selection_method = TspFactory.get_selection_method(config.selection_method)
 
         new_population: List[Tuple[str, ...]] = []
 
