@@ -10,7 +10,8 @@ from abc import ABC, abstractmethod
 from typing import List, Tuple
 
 import numpy as np
-from genetic_config import GeneticConfig
+
+from src.config_parameters import GeneticConfig
 
 
 class BaseTSPSolver(ABC):
