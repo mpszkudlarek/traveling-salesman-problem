@@ -1,3 +1,14 @@
+"""
+tsp_factory.py
+
+A factory module to provide implementations of selection, crossover,
+and mutation methods for genetic algorithms solving the Traveling
+Salesman Problem (TSP).
+
+It includes functionality for validating methods and retrieving specific
+implementations based on enumerations.
+"""
+
 from typing import Callable, List, Tuple, Union
 
 import numpy as np

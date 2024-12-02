@@ -47,8 +47,8 @@ def tournament_selection(
         len(population), tournament_size, replace=False
     )
     tournament_scores = fitness_scores[tournament_indices]
-    winner_idx = tournament_indices[np.argmax(tournament_scores)]
-    return population[winner_idx]
+    selected_idx = tournament_indices[np.argmax(tournament_scores)]
+    return population[selected_idx]
 
 
 def elitism_selection(
