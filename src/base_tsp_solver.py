@@ -88,10 +88,7 @@ class BaseTSPSolver(ABC):
 
     @abstractmethod
     def generate_new_population(
-        self,
-        population: List[Tuple[str, ...]],
-        fitness_scores: np.ndarray,
-        config: GeneticConfig,
+        self, population: List[Tuple[str, ...]], fitness_scores: np.ndarray, config: GeneticConfig
     ) -> List[Tuple[str, ...]]:
         """
         Generate a new population based on the current population and fitness scores.

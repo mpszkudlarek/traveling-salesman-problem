@@ -46,9 +46,7 @@ def tournament_selection(
 
     tournament_size = max(2, int(len(population) * tournament_percent))
 
-    tournament_indices = np.random.choice(
-        len(population), tournament_size, replace=False
-    )
+    tournament_indices = np.random.choice(len(population), tournament_size, replace=False)
 
     tournament_scores = fitness_scores[tournament_indices]
     selected_idx = tournament_indices[np.argmax(tournament_scores)]
@@ -127,9 +125,7 @@ def rank_selection(
 
     ranks = np.argsort(np.argsort(fitness_scores)[::-1]) + 1
     selection_probs = (selection_pressure / population_size) - (
-        (2 * selection_pressure - 2)
-        * (ranks - 1)
-        / (population_size * (population_size - 1))
+        (2 * selection_pressure - 2) * (ranks - 1) / (population_size * (population_size - 1))
     )
 
     selection_probs /= np.sum(selection_probs)

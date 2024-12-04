@@ -31,12 +31,8 @@ def single_point_crossover(
         return parent1, parent2
     point = np.random.randint(1, size)
 
-    child1 = list(parent1[:point]) + [
-        gene for gene in parent2 if gene not in parent1[:point]
-    ]
-    child2 = list(parent2[:point]) + [
-        gene for gene in parent1 if gene not in parent2[:point]
-    ]
+    child1 = list(parent1[:point]) + [gene for gene in parent2 if gene not in parent1[:point]]
+    child2 = list(parent2[:point]) + [gene for gene in parent1 if gene not in parent2[:point]]
 
     return tuple(child1), tuple(child2)
 
@@ -63,9 +59,7 @@ def cycle_crossover(
         indices_in_cycle = []
         current_idx = start_idx
 
-        parent2_index_map = {
-            value: parent2_idx for parent2_idx, value in enumerate(parent2)
-        }
+        parent2_index_map = {value: parent2_idx for parent2_idx, value in enumerate(parent2)}
 
         while current_idx not in indices_in_cycle:
             indices_in_cycle.append(current_idx)

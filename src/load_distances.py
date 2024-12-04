@@ -15,9 +15,7 @@ class DistanceMatrixError(Exception):
     """
 
 
-def parse_matrix(
-    lines: List[str], num_cities: int, city_names: List[str]
-) -> Dict[Tuple[str, str], int]:
+def parse_matrix(lines: List[str], num_cities: int, city_names: List[str]) -> Dict[Tuple[str, str], int]:
     """
     Parses the distance matrix from the lines of the file.
 
@@ -74,38 +72,26 @@ def load_distances(
 
         num_cities = int(lines[0].strip())
         if num_cities <= 0:
-            raise ValueError(
-                f"Number of cities must be a positive integer, got {num_cities}."
-            )
+            raise ValueError(f"Number of cities must be a positive integer, got {num_cities}.")
 
         if city_names is None:
             city_names = [f"city_{i+1}" for i in range(num_cities)]
         elif len(city_names) != num_cities:
-            raise ValueError(
-                "Provided city names do not match the number of cities in the file."
-            )
+            raise ValueError("Provided city names do not match the number of cities in the file.")
 
         if len(lines) < num_cities + 1:
-            raise ValueError(
-                f"File contains fewer rows than expected for {num_cities} cities."
-            )
+            raise ValueError(f"File contains fewer rows than expected for {num_cities} cities.")
 
         city_distances = parse_matrix(lines, num_cities, city_names)
 
         for (city1, city2), dist in city_distances.items():
             if dist < 0:
-                raise ValueError(
-                    f"Negative distance found between {city1} and {city2}: {dist}."
-                )
+                raise ValueError(f"Negative distance found between {city1} and {city2}: {dist}.")
             if city_distances.get((city2, city1), None) != dist:
-                raise ValueError(
-                    f"Distance matrix is not symmetric: ({city1}, {city2}) vs ({city2}, {city1})."
-                )
+                raise ValueError(f"Distance matrix is not symmetric: ({city1}, {city2}) vs ({city2}, {city1}).")
 
     except FileNotFoundError as e:
-        raise FileNotFoundError(
-            f"The file {file_name} was not found in the folder {folder}."
-        ) from e
+        raise FileNotFoundError(f"The file {file_name} was not found in the folder {folder}.") from e
     except ValueError as e:
         raise ValueError(f"Error processing file {file_name}: {e}") from e
     except OSError as e:

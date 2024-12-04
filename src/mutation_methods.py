@@ -10,9 +10,7 @@ from typing import List, Tuple, Union
 import numpy as np
 
 
-def adjacent_swap(
-    route: Union[List[str], Tuple[str, ...]], mutation_rate: float
-) -> Tuple[str, ...]:
+def adjacent_swap(route: Union[List[str], Tuple[str, ...]], mutation_rate: float) -> Tuple[str, ...]:
     """
     Apply adjacent swap mutation to a route.
 
@@ -33,9 +31,7 @@ def adjacent_swap(
     return tuple(route_list)
 
 
-def inversion(
-    route: Union[List[str], Tuple[str, ...]], mutation_rate: float
-) -> Tuple[str, ...]:
+def inversion(route: Union[List[str], Tuple[str, ...]], mutation_rate: float) -> Tuple[str, ...]:
     """
     Apply inversion mutation to a route by reversing a random sub-path.
 
@@ -56,9 +52,7 @@ def inversion(
     return tuple(route_list)
 
 
-def insertion(
-    route: Union[List[str], Tuple[str, ...]], mutation_rate: float
-) -> Tuple[str, ...]:
+def insertion(route: Union[List[str], Tuple[str, ...]], mutation_rate: float) -> Tuple[str, ...]:
     """
     Apply insertion mutation to a route by moving one city to a new position.
 

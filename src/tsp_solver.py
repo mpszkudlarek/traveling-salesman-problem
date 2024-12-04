@@ -16,9 +16,7 @@ from src.load_distances import load_distances
 from src.tsp_factory import TspFactory
 
 # Define defaults for configuration
-DEFAULTS = {
-    "folder": "input",
-}
+DEFAULTS = {"folder": "input"}
 
 
 class DistanceMatrixError(Exception):
@@ -43,23 +41,17 @@ class TSPSolver(BaseTSPSolver):
                                       Defaults to using values in DEFAULTS.
         """
         self.config = {**DEFAULTS, **(config or {})}
-        distance_matrix, cities = self._load_distances(
-            distance_file, self.config["folder"]
-        )
+        distance_matrix, cities = self._load_distances(distance_file, self.config["folder"])
 
         self.distance_matrix = distance_matrix
         self.cities: List[str] = cities
-        self.city_indices: Dict[str, int] = {
-            city: idx for idx, city in enumerate(self.cities)
-        }
+        self.city_indices: Dict[str, int] = {city: idx for idx, city in enumerate(self.cities)}
 
         self.best_route: List[str] = []
         self.best_distance: float = float("inf")
         self.city_count: int = len(self.cities)
 
-    def _load_distances(
-        self, file_name: str, folder: str
-    ) -> Tuple[np.ndarray, List[str]]:
+    def _load_distances(self, file_name: str, folder: str) -> Tuple[np.ndarray, List[str]]:
         """
         Load and validate the distance matrix from a file.
 
@@ -140,19 +132,14 @@ class TSPSolver(BaseTSPSolver):
                 - Tuple[str, ...]: Best route in the current population.
                 - float: Distance of the best route.
         """
-        fitness_scores = np.array(
-            [self.calculate_fitness(route) for route in population]
-        )
+        fitness_scores = np.array([self.calculate_fitness(route) for route in population])
         best_idx = np.argmax(fitness_scores)
         best_route = population[best_idx]
         best_distance = 1 / fitness_scores[best_idx]
         return fitness_scores, best_route, float(best_distance)
 
     def generate_new_population(
-        self,
-        population: List[Tuple[str, ...]],
-        fitness_scores: np.ndarray,
-        config: GeneticConfig,
+        self, population: List[Tuple[str, ...]], fitness_scores: np.ndarray, config: GeneticConfig
     ) -> List[Tuple[str, ...]]:
         """
         Generate a new population by applying selection, crossover, and mutation.
@@ -165,39 +152,27 @@ class TSPSolver(BaseTSPSolver):
         Returns:
             List[Tuple[str, ...]]: The new population after selection, crossover, and mutation.
         """
-        selection_method = TspFactory.get_selection_method(
-            config.selection_config.selection_method
-        )
-        crossover_method = TspFactory.get_crossover_method(
-            config.crossover_config.crossover_method
-        )
+        selection_method = TspFactory.get_selection_method(config.selection_config.selection_method)
+        crossover_method = TspFactory.get_crossover_method(config.crossover_config.crossover_method)
 
-        mutation_method = TspFactory.get_mutation_method(
-            config.mutation_config.mutation_method
-        )
+        mutation_method = TspFactory.get_mutation_method(config.mutation_config.mutation_method)
         new_population: List[Tuple[str, ...]] = []
         target_size = config.population_size
 
         while len(new_population) < target_size:
             parents = [
-                selection_method(
-                    population, fitness_scores, config.selection_config.tournament_size
-                )
+                selection_method(population, fitness_scores, config.selection_config.tournament_size)
                 for _ in range(2)
             ]
-
 
             if np.random.random() < config.crossover_config.crossover_rate:
                 child1, child2 = crossover_method(parents[0], parents[1])
             else:
                 child1, child2 = parents
 
-
             for child in (child1, child2):
                 if len(new_population) < target_size:
-                    mutated_child = mutation_method(
-                    child, config.mutation_config.mutation_rate
-                )
+                    mutated_child = mutation_method(child, config.mutation_config.mutation_rate)
                     new_population.append(mutated_child)
 
         return new_population
@@ -218,17 +193,13 @@ class TSPSolver(BaseTSPSolver):
         best_distances = []
 
         for _ in range(config.generations):
-            fitness_scores, current_best, current_distance = self.evaluate_population(
-                population
-            )
+            fitness_scores, current_best, current_distance = self.evaluate_population(population)
             best_distances.append(current_distance)
 
             if current_distance < self.best_distance:
                 self.best_distance = current_distance
                 self.best_route = list(current_best)
 
-            population = self.generate_new_population(
-                population, fitness_scores, config
-            )
+            population = self.generate_new_population(population, fitness_scores, config)
 
         return best_distances, self.best_route

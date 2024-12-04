@@ -13,17 +13,9 @@ from typing import Callable, List, Tuple, Union
 
 import numpy as np
 
-from src.crossover_methods import (
-    cycle_crossover,
-    partially_mapped_crossover,
-    single_point_crossover,
-)
+from src.crossover_methods import cycle_crossover, partially_mapped_crossover, single_point_crossover
 from src.mutation_methods import adjacent_swap, inversion
-from src.selection_methods import (
-    elitist_selection,
-    rank_selection,
-    tournament_selection,
-)
+from src.selection_methods import elitist_selection, rank_selection, tournament_selection
 from src.tsp_genetic_enums import CrossoverMethod, MutationMethod, SelectionMethod
 
 
@@ -36,15 +28,13 @@ class TspFactory:
 
     @classmethod
     def get_selection_method(
-        cls,
-        method: SelectionMethod,
+        cls, method: SelectionMethod
     ) -> Callable[[List[Tuple[str, ...]], np.ndarray, int], Tuple[str, ...]]:
         """
         Retrieve a selection method based on the given method enumeration.
         """
         method_map: dict[
-            SelectionMethod,
-            Callable[[List[Tuple[str, ...]], np.ndarray, int], Tuple[str, ...]],
+            SelectionMethod, Callable[[List[Tuple[str, ...]], np.ndarray, int], Tuple[str, ...]]
         ] = {
             SelectionMethod.TOURNAMENT: tournament_selection,
             SelectionMethod.ELITISM: elitist_selection,
@@ -59,18 +49,13 @@ class TspFactory:
     @classmethod
     def get_crossover_method(
         cls, method: CrossoverMethod
-    ) -> Callable[
-        [Tuple[str, ...], Tuple[str, ...]], Tuple[Tuple[str, ...], Tuple[str, ...]]
-    ]:
+    ) -> Callable[[Tuple[str, ...], Tuple[str, ...]], Tuple[Tuple[str, ...], Tuple[str, ...]]]:
         """
         Retrieve a crossover method based on the given method enumeration.
         """
         method_map: dict[
             CrossoverMethod,
-            Callable[
-                [Tuple[str, ...], Tuple[str, ...]],
-                Tuple[Tuple[str, ...], Tuple[str, ...]],
-            ],
+            Callable[[Tuple[str, ...], Tuple[str, ...]], Tuple[Tuple[str, ...], Tuple[str, ...]]],
         ] = {
             CrossoverMethod.SINGLE_POINT: single_point_crossover,
             CrossoverMethod.CYCLE: cycle_crossover,
@@ -83,16 +68,11 @@ class TspFactory:
         return method_map[method]
 
     @classmethod
-    def get_mutation_method(
-        cls, method: MutationMethod
-    ) -> Callable[[Tuple[str, ...], float], Tuple[str, ...]]:
+    def get_mutation_method(cls, method: MutationMethod) -> Callable[[Tuple[str, ...], float], Tuple[str, ...]]:
         """
         Retrieve a chromosome operation method based on the given method enumeration.
         """
-        method_map: dict[
-            MutationMethod,
-            Callable[[Tuple[str, ...], float], Tuple[str, ...]],
-        ] = {
+        method_map: dict[MutationMethod, Callable[[Tuple[str, ...], float], Tuple[str, ...]]] = {
             MutationMethod.ADJACENT_SWAP: adjacent_swap,
             MutationMethod.INVERSION: inversion,
         }
@@ -104,9 +84,7 @@ class TspFactory:
 
     @classmethod
     def validate_method(
-        cls,
-        method_type: str,
-        method: Union[SelectionMethod, CrossoverMethod, MutationMethod],
+        cls, method_type: str, method: Union[SelectionMethod, CrossoverMethod, MutationMethod]
     ) -> bool:
         """
         Validate if a given method exists for a specific method type.
