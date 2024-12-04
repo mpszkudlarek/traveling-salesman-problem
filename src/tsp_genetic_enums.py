@@ -1,5 +1,5 @@
 """
-selection_method_enums.py
+tsp_genetic_enums.py
 
 Defines enumerations for selection, crossover, and mutation methods
 used in genetic algorithms for solving the Traveling Salesman Problem (TSP).
@@ -22,6 +22,9 @@ class SelectionMethod(Enum):
     ELITISM = "elitism"
     RANKING = "ranking"
 
+    def __str__(self):
+        return self.value
+
 
 class CrossoverMethod(Enum):
     """
@@ -37,6 +40,9 @@ class CrossoverMethod(Enum):
     CYCLE = "cx"
     PARTIALLY_MAPPED = "pmx"
 
+    def __str__(self):
+        return self.value
+
 
 class MutationMethod(Enum):
     """
@@ -48,6 +54,9 @@ class MutationMethod(Enum):
         INSERTION: Inserts a gene from one position into another.
     """
 
-    ADJACENT_SWAP = "ad_swap"
+    ADJACENT_SWAP = "adjacent_swap"
     INVERSION = "inversion"
     INSERTION = "insertion"
+
+    def __str__(self):
+        return self.value

@@ -8,8 +8,9 @@ their fitness scores, supporting different selection pressures and strategies.
 
 Supported selection methods:
 - Tournament Selection: Randomly selects the best individual from a small tournament
-- Elitism Selection: Selects from the top-performing individuals
-- Ranking Selection: Selects individuals based on their rank, with configurable selection pressure
+- Elitist  Selection: Selects from the top-performing individuals
+- Rank Selection: Selects individuals based on their rank, with configurable selection pressure
+Each of those algorithms are based from: https://en.wikipedia.org/wiki/Selection_(genetic_algorithm)
 """
 
 from typing import List, Optional, Tuple
@@ -20,7 +21,7 @@ import numpy as np
 def tournament_selection(
     population: List[Tuple[str, ...]],
     fitness_scores: np.ndarray,
-    tournament_size: int,
+    tournament_percent: float,
     random_seed: Optional[int] = None,
 ) -> Tuple[str, ...]:
     """
@@ -29,7 +30,7 @@ def tournament_selection(
     Args:
         population (List[Tuple[str, ...]]): The current population of routes.
         fitness_scores (np.ndarray): Fitness scores for each individual.
-        tournament_size (int): Number of individuals competing in the tournament.
+        tournament_percent (flora): Percent of population to use in tournament (0.0 - 1.0).
         random_seed (int, optional): A seed for the random number
                                         generator to ensure reproducibility.
 
@@ -40,18 +41,21 @@ def tournament_selection(
     if random_seed is not None:
         np.random.seed(random_seed)
 
-    if tournament_size < 1 or tournament_size > len(population):
-        raise ValueError(f"Tournament size must be between 1 and {len(population)}.")
+    if not 0 < tournament_percent <= 0:
+        raise ValueError("Tournament size must be between 0 and 1.")
+
+    tournament_size = max(2, int(len(population) * tournament_percent))
 
     tournament_indices = np.random.choice(
         len(population), tournament_size, replace=False
     )
+
     tournament_scores = fitness_scores[tournament_indices]
     selected_idx = tournament_indices[np.argmax(tournament_scores)]
     return population[selected_idx]
 
 
-def elitism_selection(
+def elitist_selection(
     population: List[Tuple[str, ...]],
     fitness_scores: np.ndarray,
     num_elites: int,
@@ -86,7 +90,7 @@ def elitism_selection(
     return population[selected_idx]
 
 
-def ranking_selection(
+def rank_selection(
     population: List[Tuple[str, ...]],
     fitness_scores: np.ndarray,
     selection_pressure: Optional[float] = None,
@@ -126,9 +130,11 @@ def ranking_selection(
     # Create ranking probabilities
     # Uses linear ranking selection formula
     ranks = np.argsort(np.argsort(fitness_scores)[::-1]) + 1
-    selection_probs = (2 - selection_pressure) / population_size + (
-        2 * ranks * (selection_pressure - 1)
-    ) / (population_size * (population_size - 1))
+    selection_probs = (selection_pressure / population_size) - (
+        (2 * selection_pressure - 2)
+        * (ranks - 1)
+        / (population_size * (population_size - 1))
+    )
 
     # Normalize probabilities
     selection_probs /= np.sum(selection_probs)

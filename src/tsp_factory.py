@@ -13,13 +13,18 @@ from typing import Callable, List, Tuple, Union
 
 import numpy as np
 
-from src.crossover_method import (cycle_crossover, partially_mapped_crossover,
-                                  single_point_crossover)
-from src.mutation_method import adjacent_swap_mutation, inversion_mutation
-from src.selection_method import (elitism_selection, ranking_selection,
-                                  tournament_selection)
-from src.selection_method_enums import (CrossoverMethod, MutationMethod,
-                                        SelectionMethod)
+from src.crossover_methods import (
+    cycle_crossover,
+    partially_mapped_crossover,
+    single_point_crossover,
+)
+from src.mutation_methods import adjacent_swap, inversion
+from src.selection_methods import (
+    elitist_selection,
+    rank_selection,
+    tournament_selection,
+)
+from src.tsp_genetic_enums import CrossoverMethod, MutationMethod, SelectionMethod
 
 
 class TspFactory:
@@ -42,8 +47,8 @@ class TspFactory:
             Callable[[List[Tuple[str, ...]], np.ndarray, int], Tuple[str, ...]],
         ] = {
             SelectionMethod.TOURNAMENT: tournament_selection,
-            SelectionMethod.ELITISM: elitism_selection,
-            SelectionMethod.RANKING: ranking_selection,
+            SelectionMethod.ELITISM: elitist_selection,
+            SelectionMethod.RANKING: rank_selection,
         }
 
         if method not in method_map:
@@ -88,8 +93,8 @@ class TspFactory:
             MutationMethod,
             Callable[[Tuple[str, ...], float], Tuple[str, ...]],
         ] = {
-            MutationMethod.ADJACENT_SWAP: adjacent_swap_mutation,
-            MutationMethod.INVERSION: inversion_mutation,
+            MutationMethod.ADJACENT_SWAP: adjacent_swap,
+            MutationMethod.INVERSION: inversion,
         }
 
         if method not in method_map:

@@ -1,9 +1,11 @@
 """
-crossover_method.py
+crossover_methods.py
 
 Contains implementations of crossover methods for genetic algorithms solving the
-Traveling Salesman Problem (TSP). The methods include single-point crossover,
+Traveling Salesman Problem (TSP). The methods include one-point crossover,
 cycle crossover (CX), and partially mapped crossover (PMX).
+Each of those crossover methods are based on:
+https://en.wikipedia.org/wiki/Crossover_(genetic_algorithm)
 """
 
 from typing import Tuple
@@ -15,7 +17,7 @@ def single_point_crossover(
     parent1: Tuple[str, ...], parent2: Tuple[str, ...]
 ) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:
     """
-    Perform single-point crossover between two parent routes.
+    Perform one-point crossover between two parent routes.
 
     Args:
         parent1 (Tuple[str, ...]): The first parent route.
@@ -25,6 +27,8 @@ def single_point_crossover(
         Tuple[Tuple[str, ...], Tuple[str, ...]]: Two child routes resulting from crossover.
     """
     size = len(parent1)
+    if size < 2:
+        return parent1, parent2
     point = np.random.randint(1, size)
 
     child1 = list(parent1[:point]) + [
@@ -51,34 +55,36 @@ def cycle_crossover(
         Tuple[Tuple[str, ...], Tuple[str, ...]]: Two child routes resulting from crossover.
     """
     size = len(parent1)
+
     child1 = list(parent1)
     child2 = list(parent2)
-
-    filled1 = [False] * size
-    filled2 = [False] * size
 
     def create_cycle(start_idx):
         indices_in_cycle = []
         current_idx = start_idx
+
+        parent2_index_map = {
+            value: parent2_idx for parent2_idx, value in enumerate(parent2)
+        }
+
         while current_idx not in indices_in_cycle:
             indices_in_cycle.append(current_idx)
-            current_idx = parent1.index(parent2[current_idx])
+            current_idx = parent2_index_map[parent1[current_idx]]
+
         return indices_in_cycle
 
     for i in range(size):
-        if not filled1[i]:
+        if child1[i] == parent1[i]:
             cycle_indices = create_cycle(i)
 
             for idx in cycle_indices:
                 child1[idx] = parent1[idx]
                 child2[idx] = parent2[idx]
-                filled1[idx] = True
-                filled2[idx] = True
 
     for i in range(size):
-        if not filled1[i]:
+        if child1[i] != parent1[i]:
             child1[i] = parent2[i]
-        if not filled2[i]:
+        if child2[i] != parent2[i]:
             child2[i] = parent1[i]
 
     return tuple(child1), tuple(child2)
@@ -109,14 +115,14 @@ def partially_mapped_crossover(
     for i in range(point1, point2):
         child1[i], child2[i] = parent2[i], parent1[i]
 
-    def resolve_conflicts(child, mapping):
+    def resolve_gene_mapping(child, mapping):
         for i in range(size):
             if point1 <= i < point2:
                 continue
             while child[i] in mapping:
                 child[i] = mapping[child[i]]
 
-    resolve_conflicts(child1, mapping1)
-    resolve_conflicts(child2, mapping2)
+    resolve_gene_mapping(child1, mapping1)
+    resolve_gene_mapping(child2, mapping2)
 
     return tuple(child1), tuple(child2)

@@ -1,9 +1,8 @@
 """
-mutation_method.py
+mutation_methods.py
 
-Contains implementations of mutation methods for genetic algorithms solving the
-Traveling Salesman Problem (TSP). The methods include adjacent swap, inversion,
-and insertion mutations, applied to routes (chromosomes).
+Contains implementations of mutation methods for routes (chromosomes) in genetic algorithms.
+Methods: adjacent swap, inversion, and insertion mutations.
 """
 
 from typing import List, Tuple, Union
@@ -11,7 +10,7 @@ from typing import List, Tuple, Union
 import numpy as np
 
 
-def adjacent_swap_mutation(
+def adjacent_swap(
     route: Union[List[str], Tuple[str, ...]], mutation_rate: float
 ) -> Tuple[str, ...]:
     """
@@ -26,7 +25,7 @@ def adjacent_swap_mutation(
     """
     route_list = list(route)
 
-    if np.random.random() < mutation_rate:
+    if np.random.random() < mutation_rate and len(route_list) > 1:
         size = len(route_list)
         idx = int(np.random.randint(0, size - 1))
         route_list[idx], route_list[idx + 1] = route_list[idx + 1], route_list[idx]
@@ -34,7 +33,7 @@ def adjacent_swap_mutation(
     return tuple(route_list)
 
 
-def inversion_mutation(
+def inversion(
     route: Union[List[str], Tuple[str, ...]], mutation_rate: float
 ) -> Tuple[str, ...]:
     """
@@ -48,18 +47,16 @@ def inversion_mutation(
         Tuple[str, ...]: Mutated route.
     """
     route_list = list(route)
-    if np.random.random() < mutation_rate:
+    if np.random.random() < mutation_rate and len(route_list) > 1:
         size = len(route_list)
         indices = np.random.choice(range(size), 2, replace=False)
         start, end = map(int, sorted(indices))
-        route_list[start:end] = list(
-            reversed(route_list[start:end])
-        )
+        route_list[start:end] = list(reversed(route_list[start:end]))
 
     return tuple(route_list)
 
 
-def insertion_mutation(
+def insertion(
     route: Union[List[str], Tuple[str, ...]], mutation_rate: float
 ) -> Tuple[str, ...]:
     """
@@ -74,13 +71,13 @@ def insertion_mutation(
     """
     route_list = list(route)
 
-    if np.random.random() < mutation_rate:
+    if np.random.random() < mutation_rate and len(route_list) > 1:
         size = len(route_list)
         idx = int(np.random.randint(0, size))
         city = route_list.pop(idx)
-        new_position = int(
-            np.random.randint(0, size - 1)
-        )
+        new_position = int(np.random.randint(0, size - 1))
+        if new_position >= idx:
+            new_position += 1
         route_list.insert(new_position, city)
 
     return tuple(route_list)

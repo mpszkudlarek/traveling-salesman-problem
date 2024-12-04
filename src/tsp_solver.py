@@ -18,7 +18,6 @@ from src.tsp_factory import TspFactory
 # Define defaults for configuration
 DEFAULTS = {
     "folder": "input",
-    "tournament_size": 3,
 }
 
 

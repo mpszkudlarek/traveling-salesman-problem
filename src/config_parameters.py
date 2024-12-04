@@ -9,8 +9,8 @@ population size, crossover and mutation rates, and tournament size.
 from dataclasses import dataclass
 from typing import Optional
 
-from src.selection_method_enums import (CrossoverMethod, MutationMethod,
-                                        SelectionMethod)
+from src.tsp_genetic_enums import (CrossoverMethod, MutationMethod,
+                                   SelectionMethod)
 
 
 @dataclass(frozen=True)
