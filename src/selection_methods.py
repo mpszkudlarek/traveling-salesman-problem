@@ -117,18 +117,14 @@ def rank_selection(
     if selection_pressure is None:
         selection_pressure = 1.5
 
-    # Validate selection pressure
     if not 1.0 <= selection_pressure <= 2.0:
         raise ValueError("Selection pressure must be between 1.0 and 2.0.")
 
-    # Get the number of individuals
     population_size = len(population)
 
     if population_size < 2:
         raise ValueError("Population size must be at least 2 for ranking selection.")
 
-    # Create ranking probabilities
-    # Uses linear ranking selection formula
     ranks = np.argsort(np.argsort(fitness_scores)[::-1]) + 1
     selection_probs = (selection_pressure / population_size) - (
         (2 * selection_pressure - 2)
@@ -136,10 +132,8 @@ def rank_selection(
         / (population_size * (population_size - 1))
     )
 
-    # Normalize probabilities
     selection_probs /= np.sum(selection_probs)
 
-    # Select an individual based on ranking probabilities
     selected_idx = np.random.choice(population_size, p=selection_probs)
 
     return population[selected_idx]

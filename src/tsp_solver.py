@@ -176,8 +176,9 @@ class TSPSolver(BaseTSPSolver):
             config.mutation_config.mutation_method
         )
         new_population: List[Tuple[str, ...]] = []
+        target_size = config.population_size
 
-        while len(new_population) < config.population_size:
+        while len(new_population) < target_size:
             parents = [
                 selection_method(
                     population, fitness_scores, config.selection_config.tournament_size
@@ -185,21 +186,21 @@ class TSPSolver(BaseTSPSolver):
                 for _ in range(2)
             ]
 
-            # Apply crossover
+
             if np.random.random() < config.crossover_config.crossover_rate:
                 child1, child2 = crossover_method(parents[0], parents[1])
-                children = [child1, child2]
             else:
-                children = parents
+                child1, child2 = parents
 
-            # Apply mutation
-            for child in children:
-                mutated_child = mutation_method(
+
+            for child in (child1, child2):
+                if len(new_population) < target_size:
+                    mutated_child = mutation_method(
                     child, config.mutation_config.mutation_rate
                 )
-                new_population.append(mutated_child)
+                    new_population.append(mutated_child)
 
-        return new_population[: config.population_size]
+        return new_population
 
     def solve(self, config: GeneticConfig) -> Tuple[List[float], List[str]]:
         """

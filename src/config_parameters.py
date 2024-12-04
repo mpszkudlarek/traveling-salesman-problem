@@ -9,8 +9,7 @@ population size, crossover and mutation rates, and tournament size.
 from dataclasses import dataclass
 from typing import Optional
 
-from src.tsp_genetic_enums import (CrossoverMethod, MutationMethod,
-                                   SelectionMethod)
+from src.tsp_genetic_enums import CrossoverMethod, MutationMethod, SelectionMethod
 
 
 @dataclass(frozen=True)
@@ -133,7 +132,6 @@ class GeneticConfig:
         if self.population_size <= 0:
             raise ValueError("Population size must be a positive integer")
 
-        # Validate nested configurations
         self.selection_config.validate()
         self.crossover_config.validate()
         self.mutation_config.validate()
