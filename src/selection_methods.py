@@ -22,7 +22,7 @@ def tournament_selection(
     population: List[Tuple[str, ...]],
     fitness_scores: np.ndarray,
     tournament_percent: float,
-    random_seed: Optional[int] = None,
+
 ) -> Tuple[str, ...]:
     """
     Select an individual using tournament selection.
@@ -31,33 +31,27 @@ def tournament_selection(
         population (List[Tuple[str, ...]]): The current population of routes.
         fitness_scores (np.ndarray): Fitness scores for each individual.
         tournament_percent (flora): Percent of population to use in tournament (0.0 - 1.0).
-        random_seed (int, optional): A seed for the random number
-                                        generator to ensure reproducibility.
+
 
 
     Returns:
         Tuple[str, ...]: The selected route.
     """
-    if random_seed is not None:
-        np.random.seed(random_seed)
 
-    if not 0 < tournament_percent <= 0:
-        raise ValueError("Tournament size must be between 0 and 1.")
+    pop_size = len(population)
+    tournament_size = max(2, int(pop_size * tournament_percent))
 
-    tournament_size = max(2, int(len(population) * tournament_percent))
-
-    tournament_indices = np.random.choice(len(population), tournament_size, replace=False)
-
+    tournament_indices = np.random.choice(pop_size, tournament_size, replace=False)
     tournament_scores = fitness_scores[tournament_indices]
-    selected_idx = tournament_indices[np.argmax(tournament_scores)]
-    return population[selected_idx]
+
+    winner_idx = tournament_indices[np.argmax(tournament_scores)]
+    return population[winner_idx]
 
 
 def elitist_selection(
     population: List[Tuple[str, ...]],
     fitness_scores: np.ndarray,
-    num_elites: int,
-    random_seed: Optional[int] = None,
+    num_elites: float,
 ) -> Tuple[str, ...]:
     """
     Select a single elite individual, with preference for the top individuals.
@@ -65,24 +59,22 @@ def elitist_selection(
     Args:
         population (List[Tuple[str, ...]]): The current population of routes.
         fitness_scores (np.ndarray): Fitness scores for each individual.
-        num_elites (int): Number of top individuals to consider for selection.
-        random_seed (int, optional): A seed for the random number
-                                        generator to ensure reproducibility..
+        num_elites (float): Number of top individuals percent to consider for selection.
+
 
 
     Returns:
         Tuple[str, ...]: The selected elite route.
     """
-    if random_seed is not None:
-        np.random.seed(random_seed)
 
-    if num_elites < 1 or num_elites > len(population):
-        raise ValueError(f"Number of elites must be between 1 and {len(population)}.")
 
-    # Sort indices based on fitness scores in descending order
+    if num_elites <= 0 or num_elites > 1:
+        raise ValueError("num_elites must be between 0 and 1")
+
+    num_elites = int(num_elites * len(population))
+
     elite_indices = np.argsort(fitness_scores)[::-1][:num_elites]
 
-    # Randomly select from the top num_elites individuals
     selected_idx = np.random.choice(elite_indices)
 
     return population[selected_idx]
@@ -92,7 +84,6 @@ def rank_selection(
     population: List[Tuple[str, ...]],
     fitness_scores: np.ndarray,
     selection_pressure: Optional[float] = None,
-    random_seed: Optional[int] = None,
 ) -> Tuple[str, ...]:
     """
     Select an individual using ranking selection.
@@ -103,14 +94,12 @@ def rank_selection(
         selection_pressure (float, optional): Controls selection bias.
             Higher values create stronger selection pressure.
             If None, a dynamic default can be set.
-        random_seed (int, optional): A seed for the random number
-                                        generator to ensure reproducibility..
+
 
     Returns:
         Tuple[str, ...]: The selected route.
     """
-    if random_seed is not None:
-        np.random.seed(random_seed)
+
 
     if selection_pressure is None:
         selection_pressure = 1.5

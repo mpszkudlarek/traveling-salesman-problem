@@ -14,9 +14,9 @@ from typing import Callable, List, Tuple, Union
 import numpy as np
 
 from src.crossover_methods import cycle_crossover, partially_mapped_crossover, single_point_crossover
-from src.mutation_methods import adjacent_swap, inversion
+from src.enums.tsp_genetic_enums import CrossoverMethod, MutationMethod, SelectionMethod
+from src.mutation_methods import adjacent_swap, insertion, inversion
 from src.selection_methods import elitist_selection, rank_selection, tournament_selection
-from src.tsp_genetic_enums import CrossoverMethod, MutationMethod, SelectionMethod
 
 
 class TspFactory:
@@ -73,8 +73,9 @@ class TspFactory:
         Retrieve a chromosome operation method based on the given method enumeration.
         """
         method_map: dict[MutationMethod, Callable[[Tuple[str, ...], float], Tuple[str, ...]]] = {
-            MutationMethod.ADJACENT_SWAP: adjacent_swap,
+            MutationMethod.INSERTION: insertion,
             MutationMethod.INVERSION: inversion,
+            MutationMethod.ADJACENT_SWAP: adjacent_swap,
         }
 
         if method not in method_map:

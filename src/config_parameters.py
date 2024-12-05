@@ -7,9 +7,9 @@ population size, crossover and mutation rates, and tournament size.
 """
 
 from dataclasses import dataclass
-from typing import Optional
+from typing import Any, Dict, Optional
 
-from src.tsp_genetic_enums import CrossoverMethod, MutationMethod, SelectionMethod
+from src.enums.tsp_genetic_enums import CrossoverMethod, MutationMethod, SelectionMethod
 
 
 @dataclass(frozen=True)
@@ -19,15 +19,27 @@ class SelectionConfig:
 
     Attributes:
         selection_method (SelectionMethod): The selection method to use.
-        tournament_size (int): Size of the tournament for selection.
+        tournament_percent (int): Size of the tournament for selection.
         selection_pressure (Optional[float]): Selection pressure for ranking method.
-        random_seed (Optional[int]): Random seed for reproducibility.
+
     """
 
     selection_method: SelectionMethod
-    tournament_size: int
+    tournament_percent: Optional[float] = None
+    num_elites: Optional[float] = None
     selection_pressure: Optional[float] = None
-    random_seed: Optional[int] = None
+
+
+    def get_method_params(self) -> Dict[str, Any]:
+        """Returns the relevant parameters for the selected method"""
+        params = {}
+        if self.selection_method == SelectionMethod.TOURNAMENT:
+            params["tournament_percent"] = self.tournament_percent
+        elif self.selection_method == SelectionMethod.ELITISM:
+            params["num_elites"] = self.num_elites
+        elif self.selection_method == SelectionMethod.RANKING:
+            params["selection_pressure"] = self.selection_pressure
+        return params
 
     def validate(self):
         """
@@ -36,14 +48,22 @@ class SelectionConfig:
         Raises:
             ValueError: If any configuration parameter is invalid.
         """
-        if self.tournament_size <= 0:
-            raise ValueError("Tournament size must be a positive integer")
 
-        if self.selection_method not in ["tournament", "elitism", "ranking"]:
+        if self.selection_method not in [
+            SelectionMethod.TOURNAMENT,
+            SelectionMethod.ELITISM,
+            SelectionMethod.RANKING,
+        ]:
             raise ValueError(f"Invalid selection method: {self.selection_method}")
 
-        if self.selection_method == "ranking" and self.selection_pressure is None:
+        if self.selection_method == SelectionMethod.RANKING and self.selection_pressure is None:
             raise ValueError("Selection pressure is required for ranking selection")
+
+        if self.selection_method == SelectionMethod.ELITISM and self.num_elites is None:
+            raise ValueError("Number of elites is required for elitist selection")
+
+        if self.selection_method == SelectionMethod.TOURNAMENT and self.tournament_percent is None:
+            raise ValueError("Tournament percent is required for tournament selection")
 
 
 @dataclass(frozen=True)
@@ -69,7 +89,11 @@ class CrossoverConfig:
         if not 0 <= self.crossover_rate <= 1:
             raise ValueError("Crossover rate must be between 0 and 1")
 
-        if self.crossover_method not in ["spc", "cx", "pmx"]:
+        if self.crossover_method not in [
+            CrossoverMethod.SINGLE_POINT,
+            CrossoverMethod.CYCLE,
+            CrossoverMethod.PARTIALLY_MAPPED,
+        ]:
             raise ValueError(f"Invalid crossover method: {self.crossover_method}")
 
 
@@ -83,8 +107,8 @@ class MutationConfig:
         mutation_method (MutationMethod): The mutation method to use.
     """
 
-    mutation_rate: float
     mutation_method: MutationMethod
+    mutation_rate: float
 
     def validate(self):
         """
@@ -96,7 +120,11 @@ class MutationConfig:
         if not 0 <= self.mutation_rate <= 1:
             raise ValueError("Mutation rate must be between 0 and 1")
 
-        if self.mutation_method not in ["ad_swap", "inversion"]:
+        if self.mutation_method not in [
+            MutationMethod.ADJACENT_SWAP,
+            MutationMethod.INVERSION,
+            MutationMethod.INSERTION,
+        ]:
             raise ValueError(f"Invalid chromosome operation: {self.mutation_method}")
 
 

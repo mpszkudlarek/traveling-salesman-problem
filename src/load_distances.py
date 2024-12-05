@@ -1,11 +1,12 @@
 """
-This module contains a function to load a distance matrix from a file
-and convert it into a dictionary format for use in problems like the
-Traveling Salesman Problem.
+This module contains functions to load and process distance matrices from files
+for use in problems like the Traveling Salesman Problem.
 """
 
 import os
 from typing import Dict, List, Optional, Tuple
+
+import numpy as np
 
 
 class DistanceMatrixError(Exception):
@@ -43,7 +44,7 @@ def parse_matrix(lines: List[str], num_cities: int, city_names: List[str]) -> Di
     return city_distances
 
 
-def load_distances(
+def read_raw_distances(
     file_name: str, folder: str = "input", city_names: Optional[List[str]] = None
 ) -> Tuple[Dict[Tuple[str, str], int], List[str]]:
     """
@@ -100,3 +101,31 @@ def load_distances(
         raise DistanceMatrixError(f"An unexpected error occurred: {e}") from e
 
     return city_distances, city_names
+
+
+def load_distances(file_name: str, folder: str) -> Tuple[np.ndarray, List[str]]:
+    """
+    Load and validate the distance matrix from a file.
+
+    Args:
+        file_name (str): Name of the file containing distance data.
+        folder (str): Folder where the file is located.
+
+    Returns:
+        Tuple[np.ndarray, List[str]]:
+            - A NumPy array representing the distance matrix.
+            - A list of city names corresponding to the rows/columns of the matrix.
+    """
+
+    city_distances, cities = read_raw_distances(file_name, folder)
+
+    num_cities = len(cities)
+    matrix = np.zeros((num_cities, num_cities))
+
+    for (city1, city2), distance in city_distances.items():
+        idx1 = cities.index(city1)
+        idx2 = cities.index(city2)
+        matrix[idx1, idx2] = distance
+        matrix[idx2, idx1] = distance
+
+    return matrix, cities

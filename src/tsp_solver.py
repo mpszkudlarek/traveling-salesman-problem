@@ -53,28 +53,9 @@ class TSPSolver(BaseTSPSolver):
 
     def _load_distances(self, file_name: str, folder: str) -> Tuple[np.ndarray, List[str]]:
         """
-        Load and validate the distance matrix from a file.
-
-        Args:
-            file_name (str): Name of the file containing distance data.
-            folder (str): Folder where the file is located.
-
-        Returns:
-            Tuple[np.ndarray, List[str]]:
-                - A NumPy array representing the distance matrix.
-                - A list of city names corresponding to the rows/columns of the matrix.
+        Load the distance matrix from a file.
         """
-        city_distances, cities = load_distances(file_name, folder)
-        num_cities = len(cities)
-        matrix = np.zeros((num_cities, num_cities))
-
-        for (city1, city2), distance in city_distances.items():
-            idx1 = cities.index(city1)
-            idx2 = cities.index(city2)
-            matrix[idx1, idx2] = distance
-            matrix[idx2, idx1] = distance
-
-        return matrix, cities
+        return load_distances(file_name, folder)
 
     @lru_cache(maxsize=1024)
     def route_distance(self, route: Tuple[str, ...]) -> float:
@@ -138,32 +119,30 @@ class TSPSolver(BaseTSPSolver):
         best_distance = 1 / fitness_scores[best_idx]
         return fitness_scores, best_route, float(best_distance)
 
-    def generate_new_population(
-        self, population: List[Tuple[str, ...]], fitness_scores: np.ndarray, config: GeneticConfig
-    ) -> List[Tuple[str, ...]]:
+    def generate_new_population(self, population, fitness_scores, config):
         """
         Generate a new population by applying selection, crossover, and mutation.
 
         Args:
             population (List[Tuple[str, ...]]): Current population.
-            fitness_scores (np.ndarray): Fitness scores of each individual in the population.
-            config (GeneticConfig): Configuration parameters for selection, crossover, and mutation.
+            fitness_scores (np.ndarray): Fitness scores of each individual.
+            config (GeneticConfig): Configuration parameters.
 
         Returns:
-            List[Tuple[str, ...]]: The new population after selection, crossover, and mutation.
+            List[Tuple[str, ...]]: New population after genetic operations.
         """
         selection_method = TspFactory.get_selection_method(config.selection_config.selection_method)
-        crossover_method = TspFactory.get_crossover_method(config.crossover_config.crossover_method)
+        method_params = config.selection_config.get_method_params()
 
+
+        crossover_method = TspFactory.get_crossover_method(config.crossover_config.crossover_method)
         mutation_method = TspFactory.get_mutation_method(config.mutation_config.mutation_method)
+
         new_population: List[Tuple[str, ...]] = []
         target_size = config.population_size
 
         while len(new_population) < target_size:
-            parents = [
-                selection_method(population, fitness_scores, config.selection_config.tournament_size)
-                for _ in range(2)
-            ]
+            parents = [selection_method(population, fitness_scores, **method_params) for _ in range(2)]
 
             if np.random.random() < config.crossover_config.crossover_rate:
                 child1, child2 = crossover_method(parents[0], parents[1])
