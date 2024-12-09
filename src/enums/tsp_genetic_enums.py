@@ -14,13 +14,13 @@ class SelectionMethod(Enum):
 
     Methods:
         TOURNAMENT: Selects candidates using a tournament-based approach.
-        ELITISM: Retains the best individuals across generations.
+        ROULETTE: Selects individuals randomly based on their fitness scores.
         RANKING: Selects individuals based on their ranking in the population.
     """
 
     TOURNAMENT = "tournament"
-    ELITISM = "elitism"
     RANKING = "ranking"
+    ROULETTE = "roulette"
 
     def __str__(self):
         return self.value
@@ -38,7 +38,7 @@ class CrossoverMethod(Enum):
 
     SINGLE_POINT = "spc"
     CYCLE = "cx"
-    PARTIALLY_MAPPED = "pmx"
+    OX1 = "ox1"
 
     def __str__(self):
         return self.value

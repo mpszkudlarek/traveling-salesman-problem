@@ -2,13 +2,13 @@
 Selection methods for genetic algorithms.
 
 This module provides various selection strategies for genetic algorithms,
-including tournament selection, elitism selection, and ranking selection.
+including tournament selection, elitism selection, and roulette selection.
 These methods are used to choose individuals from a population based on
 their fitness scores, supporting different selection pressures and strategies.
 
 Supported selection methods:
 - Tournament Selection: Randomly selects the best individual from a small tournament
-- Elitist  Selection: Selects from the top-performing individuals
+- Roulette Selection: Randomly selects an individual based on their fitness score
 - Rank Selection: Selects individuals based on their rank, with configurable selection pressure
 Each of those algorithms are based from: https://en.wikipedia.org/wiki/Selection_(genetic_algorithm)
 """
@@ -19,10 +19,7 @@ import numpy as np
 
 
 def tournament_selection(
-    population: List[Tuple[str, ...]],
-    fitness_scores: np.ndarray,
-    tournament_percent: float,
-
+    population: List[Tuple[str, ...]], fitness_scores: np.ndarray, tournament_percent: float
 ) -> Tuple[str, ...]:
     """
     Select an individual using tournament selection.
@@ -48,42 +45,8 @@ def tournament_selection(
     return population[winner_idx]
 
 
-def elitist_selection(
-    population: List[Tuple[str, ...]],
-    fitness_scores: np.ndarray,
-    num_elites: float,
-) -> Tuple[str, ...]:
-    """
-    Select a single elite individual, with preference for the top individuals.
-
-    Args:
-        population (List[Tuple[str, ...]]): The current population of routes.
-        fitness_scores (np.ndarray): Fitness scores for each individual.
-        num_elites (float): Number of top individuals percent to consider for selection.
-
-
-
-    Returns:
-        Tuple[str, ...]: The selected elite route.
-    """
-
-
-    if num_elites <= 0 or num_elites > 1:
-        raise ValueError("num_elites must be between 0 and 1")
-
-    num_elites = int(num_elites * len(population))
-
-    elite_indices = np.argsort(fitness_scores)[::-1][:num_elites]
-
-    selected_idx = np.random.choice(elite_indices)
-
-    return population[selected_idx]
-
-
-def rank_selection(
-    population: List[Tuple[str, ...]],
-    fitness_scores: np.ndarray,
-    selection_pressure: Optional[float] = None,
+def ranking_selection(
+    population: List[Tuple[str, ...]], fitness_scores: np.ndarray, selection_pressure: Optional[float] = None
 ) -> Tuple[str, ...]:
     """
     Select an individual using ranking selection.
@@ -100,11 +63,9 @@ def rank_selection(
         Tuple[str, ...]: The selected route.
     """
 
+    actual_selection_pressure = 1.5 if selection_pressure is None else selection_pressure
 
-    if selection_pressure is None:
-        selection_pressure = 1.5
-
-    if not 1.0 <= selection_pressure <= 2.0:
+    if not 1.0 <= actual_selection_pressure <= 2.0:
         raise ValueError("Selection pressure must be between 1.0 and 2.0.")
 
     population_size = len(population)
@@ -113,12 +74,35 @@ def rank_selection(
         raise ValueError("Population size must be at least 2 for ranking selection.")
 
     ranks = np.argsort(np.argsort(fitness_scores)[::-1]) + 1
-    selection_probs = (selection_pressure / population_size) - (
-        (2 * selection_pressure - 2) * (ranks - 1) / (population_size * (population_size - 1))
+    selection_probs = (actual_selection_pressure / population_size) - (
+        (2 * actual_selection_pressure - 2) * (ranks - 1) / (population_size * (population_size - 1))
     )
 
     selection_probs /= np.sum(selection_probs)
 
     selected_idx = np.random.choice(population_size, p=selection_probs)
+
+    return population[selected_idx]
+
+
+def roulette_selection(population: List[Tuple[str, ...]], fitness_scores: np.ndarray) -> Tuple[str, ...]:
+    """
+    Select an individual using roulette wheel selection (fitness proportionate selection).
+
+    Args:
+        population (List[Tuple[str, ...]]): The current population of routes.
+        fitness_scores (np.ndarray): Fitness scores for each individual.
+
+    Returns:
+        Tuple[str, ...]: The selected route.
+    """
+    normalized_fitness = fitness_scores - np.min(fitness_scores)
+
+    if np.sum(normalized_fitness) == 0:
+        return population[np.random.randint(len(population))]
+
+    selection_probs = normalized_fitness / np.sum(normalized_fitness)
+
+    selected_idx = np.random.choice(len(population), p=selection_probs)
 
     return population[selected_idx]

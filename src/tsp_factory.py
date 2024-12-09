@@ -13,10 +13,10 @@ from typing import Callable, List, Tuple, Union
 
 import numpy as np
 
-from src.crossover_methods import cycle_crossover, partially_mapped_crossover, single_point_crossover
+from src.crossover_methods import cycle_crossover, ox1_crossover, single_point_crossover
 from src.enums.tsp_genetic_enums import CrossoverMethod, MutationMethod, SelectionMethod
 from src.mutation_methods import adjacent_swap, insertion, inversion
-from src.selection_methods import elitist_selection, rank_selection, tournament_selection
+from src.selection_methods import ranking_selection, roulette_selection, tournament_selection
 
 
 class TspFactory:
@@ -37,8 +37,8 @@ class TspFactory:
             SelectionMethod, Callable[[List[Tuple[str, ...]], np.ndarray, int], Tuple[str, ...]]
         ] = {
             SelectionMethod.TOURNAMENT: tournament_selection,
-            SelectionMethod.ELITISM: elitist_selection,
-            SelectionMethod.RANKING: rank_selection,
+            SelectionMethod.RANKING: ranking_selection,
+            SelectionMethod.ROULETTE: roulette_selection,
         }
 
         if method not in method_map:
@@ -59,7 +59,7 @@ class TspFactory:
         ] = {
             CrossoverMethod.SINGLE_POINT: single_point_crossover,
             CrossoverMethod.CYCLE: cycle_crossover,
-            CrossoverMethod.PARTIALLY_MAPPED: partially_mapped_crossover,
+            CrossoverMethod.OX1: ox1_crossover,
         }
 
         if method not in method_map:

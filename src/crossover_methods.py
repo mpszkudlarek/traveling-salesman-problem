@@ -84,11 +84,9 @@ def cycle_crossover(
     return tuple(child1), tuple(child2)
 
 
-def partially_mapped_crossover(
-    parent1: Tuple[str, ...], parent2: Tuple[str, ...]
-) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:
+def ox1_crossover(parent1: Tuple[str, ...], parent2: Tuple[str, ...]) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:
     """
-    Perform partially mapped crossover (PMX) between two parent routes.
+    Perform OX1 (Order Crossover) between two parent routes.
 
     Args:
         parent1 (Tuple[str, ...]): The first parent route.
@@ -98,25 +96,25 @@ def partially_mapped_crossover(
         Tuple[Tuple[str, ...], Tuple[str, ...]]: Two child routes resulting from crossover.
     """
     size = len(parent1)
-    child1 = list(parent1)
-    child2 = list(parent2)
+    if size < 2:
+        return parent1, parent2
 
-    point1, point2 = sorted(np.random.choice(range(size), 2, replace=False))
+    point1, point2 = sorted(np.random.choice(range(size), size=2, replace=False))
 
-    mapping1 = {parent1[i]: parent2[i] for i in range(point1, point2)}
-    mapping2 = {parent2[i]: parent1[i] for i in range(point1, point2)}
+    child1 = [""] * size
+    child2 = [""] * size
 
-    for i in range(point1, point2):
-        child1[i], child2[i] = parent2[i], parent1[i]
+    child1[point1:point2] = parent1[point1:point2]
+    child2[point1:point2] = parent2[point1:point2]
 
-    def resolve_gene_mapping(child, mapping):
-        for i in range(size):
-            if point1 <= i < point2:
-                continue
-            while child[i] in mapping:
-                child[i] = mapping[child[i]]
+    def fill_remaining_genes(child, parent):
+        current_idx = point2 % size
+        for gene in parent:
+            if gene not in child:
+                child[current_idx] = gene
+                current_idx = (current_idx + 1) % size
 
-    resolve_gene_mapping(child1, mapping1)
-    resolve_gene_mapping(child2, mapping2)
+    fill_remaining_genes(child1, parent2)
+    fill_remaining_genes(child2, parent1)
 
     return tuple(child1), tuple(child2)

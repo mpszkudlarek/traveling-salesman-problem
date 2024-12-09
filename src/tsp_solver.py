@@ -9,9 +9,11 @@ from functools import lru_cache
 from typing import Dict, List, Optional, Tuple
 
 import numpy as np
+from numba import cuda  # type: ignore
 
 from src.base_tsp_solver import BaseTSPSolver
 from src.config_parameters import GeneticConfig
+from src.gpu_accelerator import GPUAccelerator
 from src.load_distances import load_distances
 from src.tsp_factory import TspFactory
 
@@ -31,7 +33,9 @@ class TSPSolver(BaseTSPSolver):
     that visits each city exactly once and returns to the starting city.
     """
 
-    def __init__(self, distance_file: str, config: Optional[Dict[str, str]] = None):
+    def __init__(
+        self, distance_file: str, config: Optional[Dict[str, str]] = None, use_gpu: bool = False
+    ) -> None:
         """
         Initialize the solver with a distance matrix from a file.
 
@@ -44,6 +48,23 @@ class TSPSolver(BaseTSPSolver):
         distance_matrix, cities = self._load_distances(distance_file, self.config["folder"])
 
         self.distance_matrix = distance_matrix
+
+        self.use_gpu = use_gpu
+        if self.use_gpu:
+            try:
+                if cuda.is_available():
+                    self.gpu_accelerator = GPUAccelerator()
+                else:
+                    self.use_gpu = False
+                    print("Warning: GPU requested but CUDA is not available. Using CPU instead.")
+                    self.gpu_accelerator = None
+            except ImportError:
+                self.use_gpu = False
+                print("Warning: Numba CUDA not installed. Using CPU instead.")
+                self.gpu_accelerator = None
+        else:
+            self.gpu_accelerator = None
+
         self.cities: List[str] = cities
         self.city_indices: Dict[str, int] = {city: idx for idx, city in enumerate(self.cities)}
 
@@ -133,7 +154,6 @@ class TSPSolver(BaseTSPSolver):
         """
         selection_method = TspFactory.get_selection_method(config.selection_config.selection_method)
         method_params = config.selection_config.get_method_params()
-
 
         crossover_method = TspFactory.get_crossover_method(config.crossover_config.crossover_method)
         mutation_method = TspFactory.get_mutation_method(config.mutation_config.mutation_method)

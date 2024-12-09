@@ -15,7 +15,7 @@ from src.tsp_solver import TSPSolver
 class TSPResult:
     """
     Contains the results of a single TSP experiment run.
-    
+
     Attributes:
         best_distances: List of best distances for each generation
         best_route: Best route found during the experiment
@@ -24,6 +24,7 @@ class TSPResult:
         selection_method: Selection method used
         mutation_method: Mutation method used
     """
+
     best_distances: List[float]
     best_route: Tuple[str, ...]
     final_distance: float
@@ -35,50 +36,42 @@ class TSPResult:
 @dataclass
 class ExperimentParams:
     """Configuration parameters for TSP experiment."""
+
     mutation_rate: float
     crossover_rate: float
     population_size: int
-    selection_method: SelectionMethod = SelectionMethod.TOURNAMENT
-    crossover_method: CrossoverMethod = CrossoverMethod.PARTIALLY_MAPPED
-    mutation_method: MutationMethod = MutationMethod.ADJACENT_SWAP
+    generations: int
+    selection_method: SelectionMethod = SelectionMethod
+    crossover_method: CrossoverMethod = CrossoverMethod
+    mutation_method: MutationMethod = MutationMethod
     tournament_percent: Optional[float] = None
-    num_elites: Optional[float] = None
     selection_pressure: Optional[float] = None
-    generations: int = 200
+    use_gpu: bool = True
 
 
 def run_experiment(params: ExperimentParams) -> TSPResult:
     """
     Run a single TSP experiment with specified parameters.
-    
+
     Args:
         params: ExperimentParams containing all experiment configuration
-        
+
     Returns:
         TSPResult containing the experiment results
     """
     selection_params = {}
     if params.selection_method == SelectionMethod.TOURNAMENT:
-        selection_params['tournament_percent'] = params.tournament_percent or 0.2
-    elif params.selection_method == SelectionMethod.ELITISM:
-        selection_params['num_elites'] = params.num_elites or 0.1
+        selection_params["tournament_percent"] = params.tournament_percent or 0.2
     elif params.selection_method == SelectionMethod.RANKING:
-        selection_params['selection_pressure'] = params.selection_pressure or 1.5
+        selection_params["selection_pressure"] = params.selection_pressure or 1.5
 
-    selection_config = SelectionConfig(
-        selection_method=params.selection_method,
-        **selection_params
-    )
+    selection_config = SelectionConfig(selection_method=params.selection_method, **selection_params)
 
     crossover_config = CrossoverConfig(
-        crossover_method=params.crossover_method,
-        crossover_rate=params.crossover_rate
+        crossover_method=params.crossover_method, crossover_rate=params.crossover_rate
     )
 
-    mutation_config = MutationConfig(
-        mutation_rate=params.mutation_rate,
-        mutation_method=params.mutation_method
-    )
+    mutation_config = MutationConfig(mutation_rate=params.mutation_rate, mutation_method=params.mutation_method)
 
     config = GeneticConfig(
         generations=params.generations,
@@ -88,7 +81,8 @@ def run_experiment(params: ExperimentParams) -> TSPResult:
         mutation_config=mutation_config,
     )
 
-    solver = TSPSolver(distance_file="15.in", config={"folder": "../input"})
+    solver = TSPSolver(distance_file="10.in", config={"folder": "../input"}, use_gpu=params.use_gpu)
+
     best_distances, best_route = solver.solve(config)
 
     return TSPResult(

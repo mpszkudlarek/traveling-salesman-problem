@@ -20,23 +20,18 @@ class SelectionConfig:
     Attributes:
         selection_method (SelectionMethod): The selection method to use.
         tournament_percent (int): Size of the tournament for selection.
-        selection_pressure (Optional[float]): Selection pressure for ranking method.
 
     """
 
     selection_method: SelectionMethod
     tournament_percent: Optional[float] = None
-    num_elites: Optional[float] = None
     selection_pressure: Optional[float] = None
-
 
     def get_method_params(self) -> Dict[str, Any]:
         """Returns the relevant parameters for the selected method"""
         params = {}
         if self.selection_method == SelectionMethod.TOURNAMENT:
             params["tournament_percent"] = self.tournament_percent
-        elif self.selection_method == SelectionMethod.ELITISM:
-            params["num_elites"] = self.num_elites
         elif self.selection_method == SelectionMethod.RANKING:
             params["selection_pressure"] = self.selection_pressure
         return params
@@ -51,16 +46,13 @@ class SelectionConfig:
 
         if self.selection_method not in [
             SelectionMethod.TOURNAMENT,
-            SelectionMethod.ELITISM,
             SelectionMethod.RANKING,
+            SelectionMethod.ROULETTE,
         ]:
             raise ValueError(f"Invalid selection method: {self.selection_method}")
 
         if self.selection_method == SelectionMethod.RANKING and self.selection_pressure is None:
             raise ValueError("Selection pressure is required for ranking selection")
-
-        if self.selection_method == SelectionMethod.ELITISM and self.num_elites is None:
-            raise ValueError("Number of elites is required for elitist selection")
 
         if self.selection_method == SelectionMethod.TOURNAMENT and self.tournament_percent is None:
             raise ValueError("Tournament percent is required for tournament selection")
@@ -92,7 +84,7 @@ class CrossoverConfig:
         if self.crossover_method not in [
             CrossoverMethod.SINGLE_POINT,
             CrossoverMethod.CYCLE,
-            CrossoverMethod.PARTIALLY_MAPPED,
+            CrossoverMethod.OX1,
         ]:
             raise ValueError(f"Invalid crossover method: {self.crossover_method}")
 
