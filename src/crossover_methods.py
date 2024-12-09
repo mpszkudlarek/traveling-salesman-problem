@@ -50,38 +50,47 @@ def cycle_crossover(
     Returns:
         Tuple[Tuple[str, ...], Tuple[str, ...]]: Two child routes resulting from crossover.
     """
+
     size = len(parent1)
 
-    child1 = list(parent1)
-    child2 = list(parent2)
+    child1 = [None] * size
+    child2 = [None] * size
 
-    def create_cycle(start_idx):
-        indices_in_cycle = []
+    parent2_indices = {value: idx for idx, value in enumerate(parent2)}
+
+    visited = set()
+
+    for start_idx in range(size):
+        if start_idx in visited:
+            continue
+
+        cycle = []
         current_idx = start_idx
 
-        parent2_index_map = {value: parent2_idx for parent2_idx, value in enumerate(parent2)}
+        while current_idx not in visited:
+            visited.add(current_idx)
+            cycle.append(current_idx)
 
-        while current_idx not in indices_in_cycle:
-            indices_in_cycle.append(current_idx)
-            current_idx = parent2_index_map[parent1[current_idx]]
+            current_value = parent1[current_idx]
+            current_idx = parent2_indices[current_value]
 
-        return indices_in_cycle
+        for idx in cycle:
+            if len(visited) % 2 == 1:
 
-    for i in range(size):
-        if child1[i] == parent1[i]:
-            cycle_indices = create_cycle(i)
-
-            for idx in cycle_indices:
                 child1[idx] = parent1[idx]
                 child2[idx] = parent2[idx]
+            else:
+
+                child1[idx] = parent2[idx]
+                child2[idx] = parent1[idx]
 
     for i in range(size):
-        if child1[i] != parent1[i]:
+        if child1[i] is None:
             child1[i] = parent2[i]
-        if child2[i] != parent2[i]:
+        if child2[i] is None:
             child2[i] = parent1[i]
 
-    return tuple(child1), tuple(child2)
+    return (tuple(child1), tuple(child2))
 
 
 def ox1_crossover(parent1: Tuple[str, ...], parent2: Tuple[str, ...]) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:
